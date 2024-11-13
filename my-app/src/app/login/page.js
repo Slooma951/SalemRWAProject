@@ -1,7 +1,16 @@
 "use client";
-/// src/app/login/page.js
+import * as React from 'react';
 import { useState } from 'react';
-import {TextField, Button, Typography, Box, Container, Link} from '@mui/material';
+import AppBar from '@mui/material/AppBar';
+import Box from '@mui/material/Box';
+import Toolbar from '@mui/material/Toolbar';
+import Typography from '@mui/material/Typography';
+import Button from '@mui/material/Button';
+import IconButton from '@mui/material/IconButton';
+import MenuIcon from '@mui/icons-material/Menu';
+import Container from '@mui/material/Container';
+import TextField from '@mui/material/TextField';
+import Link from '@mui/material/Link';
 import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
@@ -71,7 +80,7 @@ export default function LoginPage() {
                         Login
                     </Button>
                     <Link href="/register" sx={{ display: 'block', mt: 2, color: '#6c757d', textAlign: 'center', fontFamily: 'Roboto, sans-serif', textDecoration: 'underline' }}>
-                        Dont have an account? Sign Up
+                        Don't have an account? Sign Up
                     </Link>
                 </form>
             </Box>

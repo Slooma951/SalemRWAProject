@@ -1,6 +1,18 @@
 "use client";
+import * as React from 'react';
 import { useState } from 'react';
-import { Box, Button, TextField, Typography, Container, CircularProgress, Link } from '@mui/material';
+import AppBar from '@mui/material/AppBar';
+import Box from '@mui/material/Box';
+import Toolbar from '@mui/material/Toolbar';
+import Typography from '@mui/material/Typography';
+import Button from '@mui/material/Button';
+import IconButton from '@mui/material/IconButton';
+import MenuIcon from '@mui/icons-material/Menu';
+import Container from '@mui/material/Container';
+import TextField from '@mui/material/TextField';
+import Link from '@mui/material/Link';
+import { useRouter } from 'next/navigation';
+import CircularProgress from '@mui/material/CircularProgress';
 
 export default function Register() {
     const [formData, setFormData] = useState({
@@ -93,15 +105,16 @@ export default function Register() {
                     variant="contained"
                     sx={{
                         mt: 2,
-                        backgroundColor: '#4caf50',
+                        backgroundColor: '#2196f3', // blue
                         color: 'white',
                         fontFamily: 'Roboto, sans-serif',
-                        '&:hover': { backgroundColor: '#45a049' }
+                        '&:hover': { backgroundColor: '#1976d2' } // darker blue
                     }}
                     disabled={loading}
                 >
                     {loading ? <CircularProgress size={24} sx={{ color: 'white' }} /> : 'Register'}
                 </Button>
+
                 {message && (
                     <Typography variant="body2" sx={{ mt: 2, color: message.includes('successful') ? 'green' : 'red' }}>
                         {message}
