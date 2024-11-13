@@ -1,17 +1,12 @@
 "use client";
 import * as React from 'react';
 import { useState } from 'react';
-import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
-import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
-import IconButton from '@mui/material/IconButton';
-import MenuIcon from '@mui/icons-material/Menu';
 import Container from '@mui/material/Container';
 import TextField from '@mui/material/TextField';
 import Link from '@mui/material/Link';
-import { useRouter } from 'next/navigation';
 import CircularProgress from '@mui/material/CircularProgress';
 
 export default function Register() {
