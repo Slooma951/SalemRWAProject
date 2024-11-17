@@ -1,124 +1,155 @@
 "use client";
-import * as React from 'react';
-import { useState } from 'react';
-import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
-import Button from '@mui/material/Button';
-import Container from '@mui/material/Container';
-import TextField from '@mui/material/TextField';
-import Link from '@mui/material/Link';
-import CircularProgress from '@mui/material/CircularProgress';
+import * as React from "react";
+import { useState } from "react";
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
+import Button from "@mui/material/Button";
+import Container from "@mui/material/Container";
+import TextField from "@mui/material/TextField";
+import Link from "@mui/material/Link";
+import CircularProgress from "@mui/material/CircularProgress";
 
 export default function Register() {
     const [formData, setFormData] = useState({
-        firstName: '',
-        lastName: '',
-        username: '',
-        email: '',
-        password: ''
+        firstName: "",
+        lastName: "",
+        username: "",
+        email: "",
+        password: "",
     });
     const [loading, setLoading] = useState(false);
-    const [errors, setErrors] = useState({});
-    const [message, setMessage] = useState('');
+    const [error, setError] = useState("");
+    const [message, setMessage] = useState("");
 
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData({ ...formData, [name]: value });
     };
 
-    const validateFields = () => {
-        let tempErrors = {};
-        if (!formData.firstName) tempErrors.firstName = 'First Name is required';
-        if (!formData.lastName) tempErrors.lastName = 'Last Name is required';
-        if (!formData.username) tempErrors.username = 'Username is required';
-        if (!formData.email || !/\S+@\S+\.\S+/.test(formData.email)) tempErrors.email = 'Valid Email is required';
-        if (!formData.password || formData.password.length < 6) tempErrors.password = 'Password must be at least 6 characters';
-        setErrors(tempErrors);
-        return Object.keys(tempErrors).length === 0;
-    };
-
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setMessage('');
-        if (!validateFields()) return;
-
+        setError("");
+        setMessage("");
         setLoading(true);
+
         try {
-            const response = await fetch('/api/auth/register', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formData)
+            const response = await fetch("/api/auth/register", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(formData),
             });
+
             const result = await response.json();
 
             if (response.ok) {
-                setMessage('Registration successful');
+                setMessage("Registration successful");
                 setFormData({
-                    firstName: '',
-                    lastName: '',
-                    username: '',
-                    email: '',
-                    password: ''
+                    firstName: "",
+                    lastName: "",
+                    username: "",
+                    email: "",
+                    password: "",
                 });
             } else {
-                setErrors(result.errors || {});
-                setMessage(result.message || 'Registration failed');
+                setError(result.message || "Registration failed");
             }
-        } catch (error) {
-            console.error('Error in registration:', error);
-            setMessage('Server error');
+        } catch (err) {
+            setError("Server error. Please try again.");
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <Container maxWidth="xs" sx={{ mt: 8 }}>
-            <Typography variant="h4" sx={{ mb: 2, fontFamily: 'Roboto, sans-serif', color: '#333' }}>Sign Up</Typography>
+        <Container maxWidth="sm" sx={styles.container}>
+            <Typography variant="h4" sx={styles.heading}>
+                Register
+            </Typography>
             <Box component="form" onSubmit={handleSubmit}>
-                {['firstName', 'lastName', 'username', 'email', 'password'].map((field) => (
-                    <TextField
-                        key={field}
-                        label={field.charAt(0).toUpperCase() + field.slice(1)}
-                        name={field}
-                        type={field === 'password' ? 'password' : 'text'}
-                        value={formData[field]}
-                        onChange={handleChange}
-                        error={Boolean(errors[field])}
-                        helperText={errors[field] || ''}
-                        fullWidth
-                        margin="normal"
-                        variant="outlined"
-                        InputLabelProps={{ style: { color: '#6c757d' } }}
-                        inputProps={{ style: { fontFamily: 'Roboto, sans-serif' } }}
-                        FormHelperTextProps={{ style: { fontFamily: 'Roboto, sans-serif', color: 'red' } }}
-                    />
-                ))}
+                {["firstName", "lastName", "username", "email", "password"].map(
+                    (field) => (
+                        <TextField
+                            key={field}
+                            label={field.charAt(0).toUpperCase() + field.slice(1)}
+                            name={field}
+                            fullWidth
+                            variant="outlined"
+                            margin="normal"
+                            type={field === "password" ? "password" : "text"}
+                            value={formData[field]}
+                            onChange={handleChange}
+                            required
+                            sx={styles.textField}
+                        />
+                    )
+                )}
+                {error && (
+                    <Typography variant="body2" color="error" sx={styles.error}>
+                        {error}
+                    </Typography>
+                )}
+                {message && (
+                    <Typography variant="body2" color="green" sx={styles.message}>
+                        {message}
+                    </Typography>
+                )}
                 <Button
                     type="submit"
                     fullWidth
                     variant="contained"
-                    sx={{
-                        mt: 2,
-                        backgroundColor: '#2196f3', // blue
-                        color: 'white',
-                        fontFamily: 'Roboto, sans-serif',
-                        '&:hover': { backgroundColor: '#1976d2' } // darker blue
-                    }}
+                    sx={styles.button}
                     disabled={loading}
                 >
-                    {loading ? <CircularProgress size={24} sx={{ color: 'white' }} /> : 'Register'}
+                    {loading ? <CircularProgress size={24} sx={styles.spinner} /> : "Register"}
                 </Button>
-
-                {message && (
-                    <Typography variant="body2" sx={{ mt: 2, color: message.includes('successful') ? 'green' : 'red' }}>
-                        {message}
-                    </Typography>
-                )}
-                <Link href="/login" sx={{ display: 'block', mt: 2, color: '#6c757d', textAlign: 'center', fontFamily: 'Roboto, sans-serif', textDecoration: 'underline' }}>
+                <Link href="/login" sx={styles.link}>
                     Already have an account? Log in
                 </Link>
             </Box>
         </Container>
     );
 }
+
+const styles = {
+    container: {
+        mt: 8,
+        backgroundColor: "#f8f9fa",
+        borderRadius: "8px",
+        padding: "24px",
+        boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)",
+        fontFamily: "Roboto, sans-serif",
+    },
+    heading: {
+        mb: 2,
+        fontFamily: "Roboto, sans-serif",
+        color: "#212529",
+        fontWeight: 500,
+        textAlign: "center",
+    },
+    textField: {
+        "& .MuiInputLabel-root": { color: "#495057" },
+        "& .MuiOutlinedInput-root": {
+            "& fieldset": { borderColor: "#ced4da" },
+            "&:hover fieldset": { borderColor: "#495057" },
+            "&.Mui-focused fieldset": { borderColor: "#007bff" },
+        },
+    },
+    button: {
+        mt: 2,
+        backgroundColor: "#007bff",
+        color: "white",
+        fontFamily: "Roboto, sans-serif",
+        "&:hover": { backgroundColor: "#0056b3" },
+    },
+    spinner: { color: "white" },
+    error: { mt: 1, fontFamily: "Roboto, sans-serif", textAlign: "center" },
+    message: { mt: 1, fontFamily: "Roboto, sans-serif", textAlign: "center" },
+    link: {
+        display: "block",
+        mt: 2,
+        color: "#6c757d",
+        textAlign: "center",
+        fontFamily: "Roboto, sans-serif",
+        textDecoration: "underline",
+    },
+};

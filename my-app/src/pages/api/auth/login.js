@@ -1,30 +1,35 @@
-// src/app/api/auth/login.js
 import connectToDatabase from '../../../lib/mongodb';
 import bcrypt from 'bcryptjs';
 
 export default async function handler(req, res) {
-    if (req.method !== 'POST') {
-        return res.status(405).json({ success: false, message: 'Method not allowed' });
-    }
+    if (req.method === 'POST') {
+        try {
+            const db = await connectToDatabase();
+            const { username, password } = req.body;
 
-    const { username, password } = req.body;
+            // Basic validation
+            if (!username || !password) {
+                return res.status(400).json({ success: false, message: 'Both username and password are required.' });
+            }
 
-    try {
-        const db = await connectToDatabase();
-        const user = await db.collection('users').findOne({ username });
+            // Check if the user exists
+            const user = await db.collection('users').findOne({ username });
+            if (!user) {
+                return res.status(400).json({ success: false, message: 'Invalid username or password.' });
+            }
 
-        if (!user) {
-            return res.status(400).json({ success: false, message: 'Invalid credentials' });
+            // Verify the password
+            const isPasswordMatch = await bcrypt.compare(password, user.password);
+            if (!isPasswordMatch) {
+                return res.status(400).json({ success: false, message: 'Invalid username or password.' });
+            }
+
+            res.status(200).json({ success: true, message: 'Login successful.' });
+        } catch (error) {
+            console.error("Login error:", error.message);
+            res.status(500).json({ success: false, message: 'Internal server error.' });
         }
-
-        const isPasswordMatch = await bcrypt.compare(password, user.password);
-        if (!isPasswordMatch) {
-            return res.status(400).json({ success: false, message: 'Invalid credentials' });
-        }
-
-        res.status(200).json({ success: true, message: 'Login successful' });
-    } catch (error) {
-        console.error('Login error:', error);
-        res.status(500).json({ success: false, message: 'Server error' });
+    } else {
+        res.status(405).json({ success: false, message: 'Method not allowed.' });
     }
 }
