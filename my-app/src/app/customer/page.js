@@ -17,6 +17,7 @@ export default function CustomerPage() {
     const [loading, setLoading] = useState(true); // Loading state
     const [cartCount, setCartCount] = useState(0); // Cart count
     const [error, setError] = useState(""); // Error state
+    const [weather, setWeather] = useState(null);//weather
     const router = useRouter();
 
     // Fetch logged-in user ID from local storage
@@ -45,6 +46,23 @@ export default function CustomerPage() {
             }
         }
         fetchProducts();
+    }, []);
+
+    useEffect(() => {
+        async function fetchWeather() {
+            try {
+                const response = await fetch(
+                    `http://api.weatherapi.com/v1/current.json?key=a5bec305169942fe99f142501242110&q=Dublin&aqi=no`
+                );
+                if (!response.ok) throw new Error("Failed to fetch weather");
+                const data = await response.json();
+                setWeather(data);
+            } catch (error) {
+                console.error("Error fetching weather:", error);
+                setWeather(null); // Reset weather data on failure
+            }
+        }
+        fetchWeather();
     }, []);
 
     // Fetch cart count
@@ -120,6 +138,19 @@ export default function CustomerPage() {
 
     return (
         <Container sx={styles.container}>
+            {/* Weather Section */}
+            <Box sx={{ mb: 4, textAlign: "center" }}>
+                <Typography variant="h5">Current Weather in Dublin</Typography>
+                {weather ? (
+                    <Box sx={{ mt: 2 }}>
+                        <Typography>Condition: {weather.current.condition.text}</Typography>
+                        <Typography>Temperature: {weather.current.temp_c}°C</Typography>
+                        <Typography>Humidity: {weather.current.humidity}%</Typography>
+                    </Box>
+                ) : (
+                    <Typography color="text.secondary">Unable to load weather data.</Typography>
+                )}
+            </Box>
             {/* Cart Button */}
             <Box sx={styles.cartButtonContainer}>
                 <Badge badgeContent={cartCount} color="secondary">
