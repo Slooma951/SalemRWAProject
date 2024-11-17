@@ -1,6 +1,6 @@
 "use client";
-import * as React from "react";
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Container from "@mui/material/Container";
 import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
@@ -9,22 +9,36 @@ import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
 import CardMedia from "@mui/material/CardMedia";
 import CircularProgress from "@mui/material/CircularProgress";
+import Badge from "@mui/material/Badge";
+import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 
 export default function CustomerPage() {
-    const [products, setProducts] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [weather, setWeather] = useState(null);
-    const [cart, setCart] = useState([]);
+    const [products, setProducts] = useState([]); // Product list
+    const [loading, setLoading] = useState(true); // Loading state
+    const [cartCount, setCartCount] = useState(0); // Cart count
+    const [error, setError] = useState(""); // Error state
+    const router = useRouter();
 
-    // Fetch products from the API
+    // Fetch logged-in user ID from local storage
+    useEffect(() => {
+        const userId = typeof window !== "undefined" ? localStorage.getItem("userId") : null;
+
+        if (!userId) {
+            alert("Please log in to access this page.");
+            router.push("/login");
+        }
+    }, [router]);
+
+    // Fetch products
     useEffect(() => {
         async function fetchProducts() {
             try {
-                const response = await fetch("/api/customer");
-                if (!response.ok) throw new Error("Failed to fetch products");
+                const response = await fetch("/api/products?type=products");
+                if (!response.ok) throw new Error("Failed to fetch products.");
                 const data = await response.json();
-                setProducts(data);
+                setProducts(data.products || []);
             } catch (error) {
+                setError("Unable to load products. Please try again later.");
                 console.error("Error fetching products:", error);
             } finally {
                 setLoading(false);
@@ -33,28 +47,54 @@ export default function CustomerPage() {
         fetchProducts();
     }, []);
 
-    // Fetch weather information using WeatherAPI
+    // Fetch cart count
     useEffect(() => {
-        async function fetchWeather() {
+        async function fetchCartCount() {
             try {
-                const response = await fetch(
-                    `http://api.weatherapi.com/v1/current.json?key=a5bec305169942fe99f142501242110&q=Dublin&aqi=no`
-                );
-                if (!response.ok) throw new Error("Failed to fetch weather");
+                const userId = typeof window !== "undefined" ? localStorage.getItem("userId") : null;
+                if (!userId) return;
+
+                const response = await fetch(`/api/cart?type=count&userId=${userId}`);
+                if (!response.ok) throw new Error("Failed to fetch cart count.");
                 const data = await response.json();
-                console.log("Weather data:", data); // For debugging
-                setWeather(data);
+                setCartCount(data.count || 0);
             } catch (error) {
-                console.error("Error fetching weather:", error);
-                setWeather(null); // Set to null to avoid breaking UI
+                console.error("Error fetching cart count:", error);
             }
         }
-        fetchWeather();
+        fetchCartCount();
     }, []);
 
     // Add product to cart
-    const addToCart = (product) => {
-        setCart((prevCart) => [...prevCart, product]);
+    const addToCart = async (product) => {
+        try {
+            const userId = typeof window !== "undefined" ? localStorage.getItem("userId") : null;
+            if (!userId) {
+                alert("Please log in to add items to the cart.");
+                router.push("/login");
+                return;
+            }
+
+            const response = await fetch("/api/cart", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    pname: product.name,
+                    price: product.price,
+                    userId,
+                }),
+            });
+
+            if (response.ok) {
+                setCartCount((prev) => prev + 1);
+            } else {
+                const errorResponse = await response.json();
+                alert(errorResponse.message || "Failed to add product to cart.");
+            }
+        } catch (error) {
+            console.error("Error adding product to cart:", error);
+            alert("An error occurred. Please try again.");
+        }
     };
 
     if (loading) {
@@ -68,22 +108,32 @@ export default function CustomerPage() {
         );
     }
 
+    if (error) {
+        return (
+            <Container sx={{ textAlign: "center", mt: 4 }}>
+                <Typography variant="h6" color="error">
+                    {error}
+                </Typography>
+            </Container>
+        );
+    }
+
     return (
         <Container sx={styles.container}>
-            {weather ? (
-                weather.location && weather.current && (
-                    <Box sx={styles.weather}>
-                        <Typography variant="h6">
-                            Weather in {weather.location.name}: {weather.current.temp_c}°C,{" "}
-                            {weather.current.condition.text}
-                        </Typography>
-                    </Box>
-                )
-            ) : (
-                <Typography variant="body1" sx={{ color: "red" }}>
-                    Weather data unavailable.
-                </Typography>
-            )}
+            {/* Cart Button */}
+            <Box sx={styles.cartButtonContainer}>
+                <Badge badgeContent={cartCount} color="secondary">
+                    <Button
+                        variant="outlined"
+                        sx={styles.cartButton}
+                        onClick={() => router.push(`/cart?userId=${localStorage.getItem("userId")}`)}
+                        startIcon={<ShoppingCartIcon />}
+                    >
+                        Cart
+                    </Button>
+                </Badge>
+            </Box>
+            {/* Products Section */}
             <Typography variant="h4" sx={styles.heading}>
                 Available Products
             </Typography>
@@ -107,7 +157,7 @@ export default function CustomerPage() {
                                     {product.description}
                                 </Typography>
                                 <Typography variant="h6" sx={styles.price}>
-                                    €{product.price.toFixed(2)}
+                                    €{Number(product.price).toFixed(2)}
                                 </Typography>
                                 <Button
                                     variant="contained"
@@ -126,29 +176,11 @@ export default function CustomerPage() {
 }
 
 const styles = {
-    container: {
-        mt: 4,
-        fontFamily: "Roboto, sans-serif",
-    },
-    weather: {
-        mb: 4,
-        padding: "16px",
-        backgroundColor: "#f8f9fa",
-        borderRadius: "8px",
-        boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)",
-        textAlign: "center",
-    },
-    heading: {
-        mb: 2,
-        fontWeight: 500,
-        color: "#212529",
-        fontFamily: "Roboto, sans-serif",
-    },
-    products: {
-        display: "grid",
-        gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
-        gap: "16px",
-    },
+    container: { mt: 4, fontFamily: "Roboto, sans-serif" },
+    cartButtonContainer: { display: "flex", justifyContent: "flex-end", mb: 2 },
+    cartButton: { backgroundColor: "#007bff", color: "white", "&:hover": { backgroundColor: "#0056b3" } },
+    heading: { mb: 2, fontWeight: 500, color: "#212529", fontFamily: "Roboto, sans-serif" },
+    products: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "16px" },
     card: {
         padding: "16px",
         backgroundColor: "#ffffff",
@@ -156,21 +188,7 @@ const styles = {
         boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)",
         textAlign: "center",
     },
-    price: {
-        mt: 2,
-        color: "#007bff",
-        fontWeight: 500,
-    },
-    addToCartButton: {
-        mt: 2,
-        backgroundColor: "#007bff",
-        color: "white",
-        "&:hover": {
-            backgroundColor: "#0056b3",
-        },
-    },
-    noProducts: {
-        textAlign: "center",
-        color: "#6c757d",
-    },
+    price: { mt: 2, color: "#007bff", fontWeight: 500 },
+    addToCartButton: { mt: 2, backgroundColor: "#007bff", color: "white", "&:hover": { backgroundColor: "#0056b3" } },
+    noProducts: { textAlign: "center", color: "#6c757d" },
 };

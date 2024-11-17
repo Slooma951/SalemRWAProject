@@ -7,9 +7,18 @@ export default async function handler(req, res) {
             const db = await connectToDatabase();
             const { firstName, lastName, username, email, password } = req.body;
 
-            // Basic validation
+            // Basic field validation
             if (!firstName || !lastName || !username || !email || !password) {
                 return res.status(400).json({ success: false, message: 'All fields are required.' });
+            }
+
+            // Password strength validation
+            const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{8,}$/;
+            if (!passwordRegex.test(password)) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Password must be at least 8 characters long, include an uppercase letter, a number, and a special character.',
+                });
             }
 
             // Check if email already exists
@@ -18,16 +27,17 @@ export default async function handler(req, res) {
                 return res.status(400).json({ success: false, message: 'Email already registered.' });
             }
 
-            // Hash the password
+            // Hash password
             const hashedPassword = await bcrypt.hash(password, 10);
 
-            // Insert user into the database
+            // Insert user into database
             const result = await db.collection('users').insertOne({
                 firstName,
                 lastName,
                 username,
                 email,
                 password: hashedPassword,
+                role: 'user', // Default role
                 createdAt: new Date(),
             });
 

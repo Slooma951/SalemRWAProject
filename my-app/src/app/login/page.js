@@ -1,15 +1,13 @@
 "use client";
-import * as React from "react";
-import { useState } from "react";
-import Box from "@mui/material/Box";
-import Typography from "@mui/material/Typography";
-import Button from "@mui/material/Button";
+
+import React, { useState } from "react";
 import Container from "@mui/material/Container";
+import Typography from "@mui/material/Typography";
 import TextField from "@mui/material/TextField";
-import Link from "@mui/material/Link";
+import Button from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
 
-export default function Login() {
+export default function LoginPage() {
     const [formData, setFormData] = useState({ username: "", password: "" });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
@@ -34,12 +32,14 @@ export default function Login() {
             const result = await response.json();
 
             if (response.ok) {
-                // Redirect to dashboard or another page
-                window.location.href = "/customer";
+                // Save user information (if required) and redirect
+                localStorage.setItem("userId", result.user.id);
+                window.location.href = "/customer"; // Redirect to the customer page
             } else {
                 setError(result.message || "Login failed");
             }
         } catch (err) {
+            console.error("Login error:", err);
             setError("Server error. Please try again.");
         } finally {
             setLoading(false);
@@ -47,11 +47,11 @@ export default function Login() {
     };
 
     return (
-        <Container maxWidth="xs" sx={styles.container}>
+        <Container maxWidth="sm" sx={styles.container}>
             <Typography variant="h4" sx={styles.heading}>
                 Login
             </Typography>
-            <Box component="form" onSubmit={handleSubmit}>
+            <form onSubmit={handleSubmit}>
                 <TextField
                     label="Username"
                     name="username"
@@ -89,10 +89,7 @@ export default function Login() {
                 >
                     {loading ? <CircularProgress size={24} sx={styles.spinner} /> : "Login"}
                 </Button>
-                <Link href="/register" sx={styles.link}>
-                    Don't have an account? Sign up
-                </Link>
-            </Box>
+            </form>
         </Container>
     );
 }
@@ -130,12 +127,4 @@ const styles = {
     },
     spinner: { color: "white" },
     error: { mt: 1, fontFamily: "Roboto, sans-serif", textAlign: "center" },
-    link: {
-        display: "block",
-        mt: 2,
-        color: "#6c757d",
-        textAlign: "center",
-        fontFamily: "Roboto, sans-serif",
-        textDecoration: "underline",
-    },
 };
