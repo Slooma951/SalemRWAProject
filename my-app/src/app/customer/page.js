@@ -13,24 +13,26 @@ import Badge from "@mui/material/Badge";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 
 export default function CustomerPage() {
-    const [products, setProducts] = useState([]); // Product list
-    const [loading, setLoading] = useState(true); // Loading state
-    const [cartCount, setCartCount] = useState(0); // Cart count
-    const [error, setError] = useState(""); // Error state
-    const [weather, setWeather] = useState(null);//weather
+    const [username, setUsername] = useState("");
+    const [products, setProducts] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [cartCount, setCartCount] = useState(0);
+    const [error, setError] = useState("");
+    const [weather, setWeather] = useState(null);
     const router = useRouter();
 
-    // Fetch logged-in user ID from local storage
     useEffect(() => {
-        const userId = typeof window !== "undefined" ? localStorage.getItem("userId") : null;
+        const userId = localStorage.getItem("userId");
+        const username = localStorage.getItem("username");
 
         if (!userId) {
             alert("Please log in to access this page.");
             router.push("/login");
+        } else {
+            setUsername(username || "User");
         }
     }, [router]);
 
-    // Fetch products
     useEffect(() => {
         async function fetchProducts() {
             try {
@@ -59,17 +61,16 @@ export default function CustomerPage() {
                 setWeather(data);
             } catch (error) {
                 console.error("Error fetching weather:", error);
-                setWeather(null); // Reset weather data on failure
+                setWeather(null);
             }
         }
         fetchWeather();
     }, []);
 
-    // Fetch cart count
     useEffect(() => {
         async function fetchCartCount() {
             try {
-                const userId = typeof window !== "undefined" ? localStorage.getItem("userId") : null;
+                const userId = localStorage.getItem("userId");
                 if (!userId) return;
 
                 const response = await fetch(`/api/cart?type=count&userId=${userId}`);
@@ -83,10 +84,9 @@ export default function CustomerPage() {
         fetchCartCount();
     }, []);
 
-    // Add product to cart
     const addToCart = async (product) => {
         try {
-            const userId = typeof window !== "undefined" ? localStorage.getItem("userId") : null;
+            const userId = localStorage.getItem("userId");
             if (!userId) {
                 alert("Please log in to add items to the cart.");
                 router.push("/login");
@@ -115,6 +115,15 @@ export default function CustomerPage() {
         }
     };
 
+    const handleLogout = () => {
+        localStorage.removeItem("userId");
+        localStorage.removeItem("username");
+        localStorage.removeItem("email");
+
+        alert("You have logged out.");
+        router.push("/login");
+    };
+
     if (loading) {
         return (
             <Container sx={{ textAlign: "center", mt: 4 }}>
@@ -138,6 +147,18 @@ export default function CustomerPage() {
 
     return (
         <Container sx={styles.container}>
+            {/* Welcome Section */}
+            <Typography variant="h4" sx={styles.welcomeText}>
+                Welcome, {username}!
+            </Typography>
+
+            {/* Logout Button */}
+            <Box sx={styles.logoutButtonContainer}>
+                <Button variant="contained" color="error" onClick={handleLogout}>
+                    Logout
+                </Button>
+            </Box>
+
             {/* Weather Section */}
             <Box sx={{ mb: 4, textAlign: "center" }}>
                 <Typography variant="h5">Current Weather in Dublin</Typography>
@@ -145,14 +166,15 @@ export default function CustomerPage() {
                     <Box sx={{ mt: 2 }}>
                         <Typography>Condition: {weather.current.condition.text}</Typography>
                         <Typography>Temperature: {weather.current.temp_c}°C</Typography>
-                        <Typography>Humidity: {weather.current.humidity}%</Typography>
                     </Box>
                 ) : (
                     <Typography color="text.secondary">Unable to load weather data.</Typography>
                 )}
             </Box>
-            {/* Cart Button */}
-            <Box sx={styles.cartButtonContainer}>
+
+            {/* Buttons Section */}
+            <Box sx={styles.buttonsContainer}>
+                {/* Cart Button */}
                 <Badge badgeContent={cartCount} color="secondary">
                     <Button
                         variant="outlined"
@@ -163,7 +185,17 @@ export default function CustomerPage() {
                         Cart
                     </Button>
                 </Badge>
+
+                {/* View Orders Button */}
+                <Button
+                    variant="outlined"
+                    sx={styles.ordersButton}
+                    onClick={() => router.push("/orders")}
+                >
+                    View Orders
+                </Button>
             </Box>
+
             {/* Products Section */}
             <Typography variant="h4" sx={styles.heading}>
                 Available Products
@@ -208,8 +240,11 @@ export default function CustomerPage() {
 
 const styles = {
     container: { mt: 4, fontFamily: "Roboto, sans-serif" },
-    cartButtonContainer: { display: "flex", justifyContent: "flex-end", mb: 2 },
+    welcomeText: { mb: 2, fontWeight: 500, color: "#007bff", fontFamily: "Roboto, sans-serif", textAlign: "center" },
+    logoutButtonContainer: { display: "flex", justifyContent: "flex-end", mb: 2 },
+    buttonsContainer: { display: "flex", justifyContent: "flex-end", gap: "16px", mb: 2 },
     cartButton: { backgroundColor: "#007bff", color: "white", "&:hover": { backgroundColor: "#0056b3" } },
+    ordersButton: { backgroundColor: "#28a745", color: "white", "&:hover": { backgroundColor: "#218838" } },
     heading: { mb: 2, fontWeight: 500, color: "#212529", fontFamily: "Roboto, sans-serif" },
     products: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "16px" },
     card: {
