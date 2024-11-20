@@ -18,7 +18,7 @@ export default function CartPage() {
     const router = useRouter();
 
     useEffect(() => {
-        const userId = typeof window !== "undefined" ? localStorage.getItem("userId") : null;
+        const userId = localStorage.getItem("userId");
 
         if (!userId) {
             alert("Please log in to view your cart.");
@@ -58,7 +58,10 @@ export default function CartPage() {
             alert("Please log in to update the cart.");
             return;
         }
-
+        if (newQuantity > 10) {
+            alert("Maximum quantity allowed is 10.");
+            return;
+        }
         try {
             const response = await fetch(`/api/cart`, {
                 method: "POST",
