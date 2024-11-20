@@ -6,7 +6,7 @@ export default async function handler(req, res) {
         const collection = db.collection("shopping_cart");
 
         if (req.method === "GET") {
-            // Retrieve cart items
+            // Retrieve cart items for a user
             const { userId } = req.query;
 
             if (!userId) {
@@ -19,19 +19,20 @@ export default async function handler(req, res) {
             // Add item to cart
             const { pname, price, userId, quantity = 1 } = req.body;
 
-            if (!pname || !price || !userId) {
+            if (!pname || !userId || quantity == null) {
                 return res.status(400).json({
                     success: false,
                     message: "Missing required fields (pname, price, or userId).",
                 });
             }
 
+            // Check if item already exists in cart
             const existingItem = await collection.findOne({ userId, pname });
             if (existingItem) {
                 // Update quantity if item already exists
                 const updatedResult = await collection.updateOne(
                     { userId, pname },
-                    { $inc: { quantity } }
+                    { $inc: { quantity } } // Increment quantity
                 );
 
                 if (updatedResult.modifiedCount > 0) {
@@ -46,7 +47,7 @@ export default async function handler(req, res) {
                     });
                 }
             } else {
-                // Add new item to cart
+                // Add a new item to the cart
                 const cartItem = { pname, price, userId, quantity, addedAt: new Date() };
                 const result = await collection.insertOne(cartItem);
 
@@ -63,27 +64,50 @@ export default async function handler(req, res) {
                 }
             }
         } else if (req.method === "DELETE") {
-            // Remove item from cart
-            const { userId, pname } = req.body;
+            // Remove item(s) from the cart
+            const { userId, pname, clearAll } = req.body;
 
-            if (!userId || !pname) {
+            if (!userId) {
                 return res.status(400).json({
                     success: false,
-                    message: "User ID and product name are required.",
+                    message: "User ID is required.",
                 });
             }
 
-            const result = await collection.deleteOne({ userId, pname });
+            if (clearAll) {
+                // Clear all items for the user
+                const result = await collection.deleteMany({ userId });
 
-            if (result.deletedCount > 0) {
-                return res.status(200).json({
-                    success: true,
-                    message: "Item removed from cart successfully.",
-                });
+                if (result.deletedCount > 0) {
+                    return res.status(200).json({
+                        success: true,
+                        message: "All items removed from cart successfully.",
+                    });
+                } else {
+                    return res.status(404).json({
+                        success: false,
+                        message: "No items found in the cart to delete.",
+                    });
+                }
+            } else if (pname) {
+                // Remove a specific item
+                const result = await collection.deleteOne({ userId, pname });
+
+                if (result.deletedCount > 0) {
+                    return res.status(200).json({
+                        success: true,
+                        message: "Item removed from cart successfully.",
+                    });
+                } else {
+                    return res.status(404).json({
+                        success: false,
+                        message: "Item not found in cart.",
+                    });
+                }
             } else {
-                return res.status(404).json({
+                return res.status(400).json({
                     success: false,
-                    message: "Item not found in cart.",
+                    message: "Either 'pname' or 'clearAll' flag must be provided.",
                 });
             }
         } else {
