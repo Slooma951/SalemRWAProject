@@ -1,6 +1,7 @@
 "use client";
-import * as React from "react";
-import { useState } from "react";
+
+import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import Container from "@mui/material/Container";
 import Typography from "@mui/material/Typography";
 import TextField from "@mui/material/TextField";
@@ -18,6 +19,63 @@ export default function ManagerPage() {
     });
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState({ type: "", text: "" });
+    const [isAuthorized, setIsAuthorized] = useState(false);
+    const [orderStats, setOrderStats] = useState(null); // To hold order statistics
+    const [statsLoading, setStatsLoading] = useState(true); // Separate loading for stats
+    const router = useRouter();
+
+    useEffect(() => {
+        const verifyManager = async () => {
+            const userId = localStorage.getItem("userId");
+
+            if (!userId) {
+                alert("You must log in as a manager to access this page.");
+                router.push("/login");
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/auth/user?userId=${userId}`);
+                const data = await response.json();
+
+                if (response.ok && data.role === "manager") {
+                    setIsAuthorized(true);
+                } else {
+                    alert("You are not authorized to access this page.");
+                    router.push("/login");
+                }
+            } catch (error) {
+                console.error("Authorization error:", error);
+                alert("An error occurred while verifying your access.");
+                router.push("/login");
+            }
+        };
+
+        verifyManager();
+    }, [router]);
+
+    useEffect(() => {
+        if (!isAuthorized) return;
+
+        const fetchOrderStats = async () => {
+            try {
+                const response = await fetch(`/api/orders?isManager=true`); // Correct endpoint for stats
+                const data = await response.json();
+
+                if (response.ok) {
+                    setOrderStats(data);
+                } else {
+                    console.error(data.message || "Failed to fetch order statistics.");
+                }
+            } catch (error) {
+                console.error("Error fetching order statistics:", error);
+            } finally {
+                setStatsLoading(false);
+            }
+        };
+
+        fetchOrderStats();
+    }, [isAuthorized]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -60,9 +118,46 @@ export default function ManagerPage() {
         }
     };
 
+    if (!isAuthorized) {
+        return (
+            <Container maxWidth="sm" sx={{ mt: 4, textAlign: "center" }}>
+                <CircularProgress />
+                <Typography variant="h6" sx={{ mt: 2 }}>
+                    Verifying access...
+                </Typography>
+            </Container>
+        );
+    }
+
     return (
-        <Container maxWidth="sm" sx={{ mt: 4 }}>
+        <Container maxWidth="md" sx={{ mt: 4 }}>
             <Typography variant="h4" sx={{ mb: 2, fontFamily: "Roboto, sans-serif" }}>
+                Manager Dashboard
+            </Typography>
+
+            {/* Order Statistics Section */}
+            {statsLoading ? (
+                <CircularProgress size={24} sx={{ mb: 4 }} />
+            ) : orderStats ? (
+                <Box sx={{ mb: 4, p: 2, border: "1px solid #ddd", borderRadius: "8px" }}>
+                    <Typography variant="h5" sx={{ mb: 2 }}>
+                        Order Statistics
+                    </Typography>
+                    <Typography variant="body1">
+                        <strong>Total Orders:</strong> {orderStats.totalOrders}
+                    </Typography>
+                    <Typography variant="body1">
+                        <strong>Total Revenue:</strong> €{orderStats.totalRevenue.toFixed(2)}
+                    </Typography>
+                </Box>
+            ) : (
+                <Typography variant="body1" color="error">
+                    Failed to load order statistics.
+                </Typography>
+            )}
+
+            {/* Add Product Form */}
+            <Typography variant="h5" sx={{ mb: 2 }}>
                 Add a New Product
             </Typography>
             <Box component="form" onSubmit={handleSubmit} sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
