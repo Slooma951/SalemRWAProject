@@ -18,7 +18,7 @@ async function connectToDatabase() {
             }
 
             await client.connect();
-            dbConnection = client.db("RWADB"); // Use the database name specified
+            dbConnection = client.db("RWADB");
             console.log("Database connected successfully");
         } catch (error) {
             console.error("Database connection error:", error.message);
