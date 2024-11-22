@@ -1,26 +1,34 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Container from "@mui/material/Container";
 import Typography from "@mui/material/Typography";
 import TextField from "@mui/material/TextField";
 import Button from "@mui/material/Button";
-import CircularProgress from "@mui/material/CircularProgress";
+import Link from "@mui/material/Link"; // Import Material-UI Link component
+import Box from "@mui/material/Box"; // For layout
 
 export default function LoginPage() {
+    const router = useRouter();
     const [formData, setFormData] = useState({ username: "", password: "" });
-    const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
 
+    // Redirect to customer page if already logged in
+    useEffect(() => {
+        const userId = localStorage.getItem("userId");
+        if (userId) {
+            router.push("/customer");
+        }
+    }, [router]);
+
     const handleChange = (e) => {
-        const { name, value } = e.target;
-        setFormData({ ...formData, [name]: value });
+        setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError("");
-        setLoading(true);
 
         try {
             const response = await fetch("/api/auth/login", {
@@ -29,26 +37,25 @@ export default function LoginPage() {
                 body: JSON.stringify(formData),
             });
 
-            const result = await response.json();
+            const data = await response.json();
 
             if (response.ok) {
-                // Save user information (if required) and redirect
-                localStorage.setItem("userId", result.user.id);
-                window.location.href = "/customer"; // Redirect to the customer page
+                localStorage.setItem("userId", data.user.id);
+                localStorage.setItem("username", data.user.username);
+                localStorage.setItem("email", data.user.email);
+                router.push("/customer");
             } else {
-                setError(result.message || "Login failed");
+                setError(data.message || "Invalid credentials.");
             }
         } catch (err) {
             console.error("Login error:", err);
-            setError("Server error. Please try again.");
-        } finally {
-            setLoading(false);
+            setError("An error occurred. Please try again.");
         }
     };
 
     return (
-        <Container maxWidth="sm" sx={styles.container}>
-            <Typography variant="h4" sx={styles.heading}>
+        <Container maxWidth="sm">
+            <Typography variant="h4" align="center" gutterBottom>
                 Login
             </Typography>
             <form onSubmit={handleSubmit}>
@@ -56,75 +63,40 @@ export default function LoginPage() {
                     label="Username"
                     name="username"
                     fullWidth
-                    variant="outlined"
                     margin="normal"
                     value={formData.username}
                     onChange={handleChange}
                     required
-                    sx={styles.textField}
                 />
                 <TextField
                     label="Password"
                     name="password"
                     type="password"
                     fullWidth
-                    variant="outlined"
                     margin="normal"
                     value={formData.password}
                     onChange={handleChange}
                     required
-                    sx={styles.textField}
                 />
                 {error && (
-                    <Typography variant="body2" color="error" sx={styles.error}>
+                    <Typography color="error" align="center">
                         {error}
                     </Typography>
                 )}
-                <Button
-                    type="submit"
-                    fullWidth
-                    variant="contained"
-                    sx={styles.button}
-                    disabled={loading}
-                >
-                    {loading ? <CircularProgress size={24} sx={styles.spinner} /> : "Login"}
+                <Button type="submit" fullWidth variant="contained" color="primary" sx={{ mt: 2 }}>
+                    Login
                 </Button>
             </form>
+
+            {/* Sign Up Link */}
+            <Box sx={{ mt: 3, textAlign: "center" }}>
+                <Typography variant="body2">
+                    Don't have an account?{" "}
+                    <Link href="/register" underline="hover" color="primary">
+                        Sign up
+                    </Link>
+                </Typography>
+            </Box>
         </Container>
     );
 }
-
-const styles = {
-    container: {
-        mt: 8,
-        backgroundColor: "#f8f9fa",
-        borderRadius: "8px",
-        padding: "24px",
-        boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)",
-        fontFamily: "Roboto, sans-serif",
-    },
-    heading: {
-        mb: 2,
-        fontFamily: "Roboto, sans-serif",
-        color: "#212529",
-        fontWeight: 500,
-        textAlign: "center",
-    },
-    textField: {
-        "& .MuiInputLabel-root": { color: "#495057" },
-        "& .MuiOutlinedInput-root": {
-            "& fieldset": { borderColor: "#ced4da" },
-            "&:hover fieldset": { borderColor: "#495057" },
-            "&.Mui-focused fieldset": { borderColor: "#007bff" },
-        },
-    },
-    button: {
-        mt: 2,
-        backgroundColor: "#007bff",
-        color: "white",
-        fontFamily: "Roboto, sans-serif",
-        "&:hover": { backgroundColor: "#0056b3" },
-    },
-    spinner: { color: "white" },
-    error: { mt: 1, fontFamily: "Roboto, sans-serif", textAlign: "center" },
-};
