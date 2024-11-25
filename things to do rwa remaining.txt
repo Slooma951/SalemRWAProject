@@ -2,4 +2,10 @@ things to do rwa remaining
 
 order two error hydrate error
 
+register page to add session
+
+cant have the same username
+
+manager can see all the orders made
+
 testing
