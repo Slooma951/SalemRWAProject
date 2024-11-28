@@ -6,7 +6,7 @@ export default async function handler(req, res) {
         const productsCollection = db.collection("products");
 
         if (req.method === "GET") {
-            // Fetch all products from the database
+
             const products = await productsCollection.find({}).toArray();
             return res.status(200).json({ success: true, products });
         } else {

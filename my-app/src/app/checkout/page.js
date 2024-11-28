@@ -65,7 +65,7 @@ export default function CheckoutPage() {
 
             if (response.ok) {
                 alert("Order placed successfully!");
-                router.push("/orders");
+                router.push("/customer");
             } else {
                 alert("Failed to place order.");
             }
