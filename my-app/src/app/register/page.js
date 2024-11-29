@@ -1,24 +1,24 @@
 "use client";
-import React, { useState } from "react";
-import Box from "@mui/material/Box";
-import Typography from "@mui/material/Typography";
+import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import TextField from "@mui/material/TextField";
 import Button from "@mui/material/Button";
 import Container from "@mui/material/Container";
-import TextField from "@mui/material/TextField";
-import Link from "@mui/material/Link";
-import CircularProgress from "@mui/material/CircularProgress";
+import Typography from "@mui/material/Typography";
 
 export default function Register() {
-    const [formData, setFormData] = useState({
-        firstName: "",
-        lastName: "",
-        username: "",
-        email: "",
-        password: "",
-    });
-    const [loading, setLoading] = useState(false);
+    const [formData, setFormData] = useState({ username: "", email: "", password: "" });
     const [error, setError] = useState("");
     const [message, setMessage] = useState("");
+    const router = useRouter();
+
+    // Redirect logged-in users
+    useEffect(() => {
+        const userId = localStorage.getItem("userId");
+        if (userId) {
+            router.push("/customer");
+        }
+    }, [router]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -29,14 +29,6 @@ export default function Register() {
         e.preventDefault();
         setError("");
         setMessage("");
-        setLoading(true);
-
-        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{8,}$/;
-        if (!passwordRegex.test(formData.password)) {
-            setError('Password must be at least 8 characters long, include an uppercase letter, a number, and a special character.');
-            setLoading(false);
-            return;
-        }
 
         try {
             const response = await fetch("/api/auth/register", {
@@ -45,117 +37,51 @@ export default function Register() {
                 body: JSON.stringify(formData),
             });
 
-            const result = await response.json();
-
             if (response.ok) {
-                setMessage("Registration successful");
-                setFormData({
-                    firstName: "",
-                    lastName: "",
-                    username: "",
-                    email: "",
-                    password: "",
-                });
+                setMessage("Registration successful. Redirecting to login...");
+                setTimeout(() => router.push("/login"), 2000);
             } else {
+                const result = await response.json();
                 setError(result.message || "Registration failed");
             }
-        } catch (err) {
+        } catch {
             setError("Server error. Please try again.");
-        } finally {
-            setLoading(false);
         }
     };
 
     return (
-        <Container maxWidth="sm" sx={styles.container}>
-            <Typography variant="h4" sx={styles.heading}>
+        <Container maxWidth="sm" style={{ marginTop: "2rem", textAlign: "center" }}>
+            <Typography variant="h4" gutterBottom>
                 Register
             </Typography>
-            <Box component="form" onSubmit={handleSubmit}>
-                {["firstName", "lastName", "username", "email", "password"].map(
-                    (field) => (
-                        <TextField
-                            key={field}
-                            label={field.charAt(0).toUpperCase() + field.slice(1)}
-                            name={field}
-                            fullWidth
-                            variant="outlined"
-                            margin="normal"
-                            type={field === "password" ? "password" : "text"}
-                            value={formData[field]}
-                            onChange={handleChange}
-                            required
-                            sx={styles.textField}
-                        />
-                    )
-                )}
+            <form onSubmit={handleSubmit}>
+                {["username", "email", "password"].map((field) => (
+                    <TextField
+                        key={field}
+                        label={field.charAt(0).toUpperCase() + field.slice(1)}
+                        name={field}
+                        fullWidth
+                        margin="normal"
+                        type={field === "password" ? "password" : "text"}
+                        value={formData[field]}
+                        onChange={handleChange}
+                        required
+                    />
+                ))}
                 {error && (
-                    <Typography variant="body2" color="error" sx={styles.error}>
+                    <Typography variant="body2" color="error" style={{ marginTop: "1rem" }}>
                         {error}
                     </Typography>
                 )}
                 {message && (
-                    <Typography variant="body2" color="green" sx={styles.message}>
+                    <Typography variant="body2" color="primary" style={{ marginTop: "1rem" }}>
                         {message}
                     </Typography>
                 )}
-                <Button
-                    type="submit"
-                    fullWidth
-                    variant="contained"
-                    sx={styles.button}
-                    disabled={loading}
-                >
-                    {loading ? <CircularProgress size={24} sx={styles.spinner} /> : "Register"}
+                <Button type="submit" variant="contained" color="primary" fullWidth>
+                    Register
                 </Button>
-                <Link href="/login" sx={styles.link}>
-                    Already have an account? Log in
-                </Link>
-            </Box>
+            </form>
         </Container>
     );
 }
-
-const styles = {
-    container: {
-        mt: 8,
-        backgroundColor: "#f8f9fa",
-        borderRadius: "8px",
-        padding: "24px",
-        boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.1)",
-        fontFamily: "Roboto, sans-serif",
-    },
-    heading: {
-        mb: 2,
-        fontFamily: "Roboto, sans-serif",
-        color: "#212529",
-        fontWeight: 500,
-        textAlign: "center",
-    },
-    textField: {
-        "& .MuiInputLabel-root": { color: "#495057" },
-        "& .MuiOutlinedInput-root": {
-            "& fieldset": { borderColor: "#ced4da" },
-            "&:hover fieldset": { borderColor: "#495057" },
-            "&.Mui-focused fieldset": { borderColor: "#007bff" },
-        },
-    },
-    button: {
-        mt: 2,
-        backgroundColor: "#007bff",
-        color: "white",
-        fontFamily: "Roboto, sans-serif",
-        "&:hover": { backgroundColor: "#0056b3" },
-    },
-    spinner: { color: "white" },
-    error: { mt: 1, fontFamily: "Roboto, sans-serif", textAlign: "center" },
-    message: { mt: 1, fontFamily: "Roboto, sans-serif", textAlign: "center" },
-    link: {
-        display: "block",
-        mt: 2,
-        color: "#6c757d",
-        textAlign: "center",
-        fontFamily: "Roboto, sans-serif",
-        textDecoration: "underline",
-    },
-};

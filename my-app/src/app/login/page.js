@@ -2,22 +2,15 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import Container from "@mui/material/Container";
-import Typography from "@mui/material/Typography";
-import TextField from "@mui/material/TextField";
-import Button from "@mui/material/Button";
-import Link from "@mui/material/Link"; // Import Material-UI Link component
-import Box from "@mui/material/Box"; // For layout
+import { Container, Typography, TextField, Button } from "@mui/material";
 
 export default function LoginPage() {
     const router = useRouter();
     const [formData, setFormData] = useState({ username: "", password: "" });
     const [error, setError] = useState("");
 
-    // Redirect to customer page if already logged in
     useEffect(() => {
-        const userId = localStorage.getItem("userId");
-        if (userId) {
+        if (localStorage.getItem("userId")) {
             router.push("/customer");
         }
     }, [router]);
@@ -41,14 +34,11 @@ export default function LoginPage() {
 
             if (response.ok) {
                 localStorage.setItem("userId", data.user.id);
-                localStorage.setItem("username", data.user.username);
-                localStorage.setItem("email", data.user.email);
                 router.push("/customer");
             } else {
                 setError(data.message || "Invalid credentials.");
             }
-        } catch (err) {
-            console.error("Login error:", err);
+        } catch {
             setError("An error occurred. Please try again.");
         }
     };
@@ -79,7 +69,7 @@ export default function LoginPage() {
                     required
                 />
                 {error && (
-                    <Typography color="error" align="center">
+                    <Typography color="error" align="center" sx={{ mt: 2 }}>
                         {error}
                     </Typography>
                 )}
@@ -87,16 +77,12 @@ export default function LoginPage() {
                     Login
                 </Button>
             </form>
-
-            {/* Sign Up Link */}
-            <Box sx={{ mt: 3, textAlign: "center" }}>
-                <Typography variant="body2">
-                    Don't have an account?{" "}
-                    <Link href="/register" underline="hover" color="primary">
-                        Sign up
-                    </Link>
-                </Typography>
-            </Box>
+            <Typography align="center" sx={{ mt: 3 }}>
+                Don't have an account?{" "}
+                <a href="/register" style={{ color: "blue", textDecoration: "underline" }}>
+                    Sign up
+                </a>
+            </Typography>
         </Container>
     );
 }

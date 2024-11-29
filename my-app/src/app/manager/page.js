@@ -4,24 +4,12 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Container from "@mui/material/Container";
 import Typography from "@mui/material/Typography";
-import TextField from "@mui/material/TextField";
-import Button from "@mui/material/Button";
 import Box from "@mui/material/Box";
 import CircularProgress from "@mui/material/CircularProgress";
-import Alert from "@mui/material/Alert";
 
 export default function ManagerPage() {
-    const [formData, setFormData] = useState({
-        name: "",
-        description: "",
-        image: "",
-        price: "",
-    });
-    const [loading, setLoading] = useState(false);
-    const [message, setMessage] = useState({ type: "", text: "" });
     const [isAuthorized, setIsAuthorized] = useState(false);
-    const [orderStats, setOrderStats] = useState(null); // To hold order statistics
-    const [statsLoading, setStatsLoading] = useState(true); // Separate loading for stats
+    const [allOrders, setAllOrders] = useState([]);
     const router = useRouter();
 
     useEffect(() => {
@@ -57,66 +45,23 @@ export default function ManagerPage() {
     useEffect(() => {
         if (!isAuthorized) return;
 
-        const fetchOrderStats = async () => {
+        const fetchOrders = async () => {
             try {
-                const response = await fetch(`/api/orders?isManager=true`); // Correct endpoint for stats
+                const response = await fetch(`/api/orders?isManager=true`);
                 const data = await response.json();
 
                 if (response.ok) {
-                    setOrderStats(data);
+                    setAllOrders(data.orders || []);
                 } else {
-                    console.error(data.message || "Failed to fetch order statistics.");
+                    console.error(data.message || "Failed to fetch orders.");
                 }
             } catch (error) {
-                console.error("Error fetching order statistics:", error);
-            } finally {
-                setStatsLoading(false);
+                console.error("Error fetching orders:", error);
             }
         };
 
-        fetchOrderStats();
+        fetchOrders();
     }, [isAuthorized]);
-
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        setFormData({ ...formData, [name]: value });
-    };
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setMessage({ type: "", text: "" });
-
-        // Validation
-        if (!formData.name || !formData.price) {
-            setMessage({ type: "error", text: "Name and Price are required." });
-            return;
-        }
-
-        setLoading(true);
-
-        try {
-            const response = await fetch("/api/products", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify(formData),
-            });
-            const result = await response.json();
-
-            if (response.ok) {
-                setMessage({ type: "success", text: "Product added successfully!" });
-                setFormData({ name: "", description: "", image: "", price: "" });
-            } else {
-                setMessage({ type: "error", text: result.message || "Failed to add product." });
-            }
-        } catch (error) {
-            console.error("Error adding product:", error);
-            setMessage({ type: "error", text: "An error occurred. Please try again later." });
-        } finally {
-            setLoading(false);
-        }
-    };
 
     if (!isAuthorized) {
         return (
@@ -135,73 +80,32 @@ export default function ManagerPage() {
                 Manager Dashboard
             </Typography>
 
-            {/* Order Statistics Section */}
-            {statsLoading ? (
-                <CircularProgress size={24} sx={{ mb: 4 }} />
-            ) : orderStats ? (
+            {/* All Orders Section */}
+            <Typography variant="h5" sx={{ mb: 2 }}>
+                All Orders
+            </Typography>
+            {allOrders.length > 0 ? (
                 <Box sx={{ mb: 4, p: 2, border: "1px solid #ddd", borderRadius: "8px" }}>
-                    <Typography variant="h5" sx={{ mb: 2 }}>
-                        Order Statistics
-                    </Typography>
-                    <Typography variant="body1">
-                        <strong>Total Orders:</strong> {orderStats.totalOrders}
-                    </Typography>
-                    <Typography variant="body1">
-                        <strong>Total Revenue:</strong> €{orderStats.totalRevenue.toFixed(2)}
-                    </Typography>
+                    {allOrders.map((order, idx) => (
+                        <Box key={order._id} sx={{ mb: 2 }}>
+                            <Typography variant="h6">
+                                <strong>Order ID:</strong> {order._id} - <strong>Placed By:</strong> {order.username} ({order.email})
+                            </Typography>
+                            <Typography variant="body2">
+                                <strong>Order Time:</strong> {new Date(order.createdAt).toLocaleString()}
+                            </Typography>
+                            <ul>
+                                {order.items.map((item, itemIdx) => (
+                                    <li key={itemIdx}>
+                                        {item.name} - €{Number(item.price).toFixed(2)} x {item.quantity}
+                                    </li>
+                                ))}
+                            </ul>
+                        </Box>
+                    ))}
                 </Box>
             ) : (
-                <Typography variant="body1" color="error">
-                    Failed to load order statistics.
-                </Typography>
-            )}
-
-            {/* Add Product Form */}
-            <Typography variant="h5" sx={{ mb: 2 }}>
-                Add a New Product
-            </Typography>
-            <Box component="form" onSubmit={handleSubmit} sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                <TextField
-                    label="Product Name"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    fullWidth
-                    required
-                />
-                <TextField
-                    label="Description"
-                    name="description"
-                    value={formData.description}
-                    onChange={handleChange}
-                    fullWidth
-                    multiline
-                    rows={4}
-                />
-                <TextField
-                    label="Image URL"
-                    name="image"
-                    value={formData.image}
-                    onChange={handleChange}
-                    fullWidth
-                />
-                <TextField
-                    label="Price (€)"
-                    name="price"
-                    type="number"
-                    value={formData.price}
-                    onChange={handleChange}
-                    fullWidth
-                    required
-                />
-                <Button type="submit" variant="contained" color="primary" disabled={loading}>
-                    {loading ? <CircularProgress size={24} sx={{ color: "white" }} /> : "Add Product"}
-                </Button>
-            </Box>
-            {message.text && (
-                <Alert severity={message.type} sx={{ mt: 2 }}>
-                    {message.text}
-                </Alert>
+                <Typography>No orders found.</Typography>
             )}
         </Container>
     );

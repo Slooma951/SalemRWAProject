@@ -1,11 +1,5 @@
-things to do rwa remaining 
-
-order two error hydrate error
-
-register page to add session
-
-cant have the same username
-
-manager can see all the orders made
-
+things to do rwa remaining
+===========================
+order  error hydrate error
+================================
 testing
