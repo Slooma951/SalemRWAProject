@@ -7,7 +7,7 @@ const connectToDatabase = async () => {
     }
     if (!dbConnection) {
         try {
-            client = client || new MongoClient(process.env.MONGODB_URI);
+            client = client || new MongoClient("mongodb+srv://b00149614:DwOAZ7tROreOh3at@cluster0.mongodb.net/RWADB?retryWrites=true&w=majority&appName=AtlasApp\n");
             await client.connect();
             dbConnection = client.db("RWADB");
             console.log("Database connected successfully");
@@ -19,3 +19,6 @@ const connectToDatabase = async () => {
     return dbConnection;
 };
 export default connectToDatabase;
+
+
+//MongoDBURI=mongodb+srv://b00149614:DwOAZ7tROreOh3at@cluster0.mongodb.net/RWADB?retryWrites=true&w=majority&appName=AtlasApp
