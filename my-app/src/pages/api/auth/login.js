@@ -3,7 +3,7 @@ import bcrypt from "bcryptjs";
 
 export default async function handler(req, res) {
     if (req.method === "POST") {
-        try {
+
             const db = await connectToDatabase();
             const { username, password } = req.body;
 
@@ -24,10 +24,5 @@ export default async function handler(req, res) {
                     username: user.username,
                 },
             });
-        } catch {
-            return res.status(500).json({ success: false, message: "Internal server error." });
         }
-    } else {
-        return res.status(405).json({ success: false, message: "Method not allowed." });
-    }
 }
