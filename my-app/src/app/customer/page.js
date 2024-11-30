@@ -49,7 +49,7 @@ export default function CustomerPage() {
     return (
         <Container sx={{ mt: 4 }}>
             <Typography variant="h4" sx={{ mb: 2, color: "#007bff", textAlign: "center" }}>
-                Welcome, {username}!
+                Welcome
             </Typography>
             <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 2 }}>
                 <Button variant="contained" color="error" onClick={handleLogout}>
