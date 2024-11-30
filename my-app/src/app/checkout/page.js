@@ -8,7 +8,6 @@ import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
 import ListItemText from "@mui/material/ListItemText";
 import CircularProgress from "@mui/material/CircularProgress";
-import Divider from "@mui/material/Divider";
 
 export default function CheckoutPage() {
     const [cartItems, setCartItems] = useState([]);
@@ -27,14 +26,12 @@ export default function CheckoutPage() {
 
         async function fetchUserAndCart() {
             try {
-                // Fetch user details
                 const userResponse = await fetch(`/api/auth/user?userId=${userId}`);
                 const userData = await userResponse.json();
                 if (!userResponse.ok) throw new Error(userData.message);
 
                 setUser({ userId, username: userData.username, email: userData.email });
 
-                // Fetch cart details
                 const cartResponse = await fetch(`/api/cart?userId=${userId}`);
                 const cartData = await cartResponse.json();
                 if (!cartResponse.ok) throw new Error(cartData.message);
@@ -54,7 +51,6 @@ export default function CheckoutPage() {
 
     const handleCheckout = async () => {
         try {
-            // Send checkout data to the API
             const response = await fetch(`/api/checkout`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -69,20 +65,14 @@ export default function CheckoutPage() {
 
             if (response.ok) {
                 alert("Order placed successfully!");
-                setCartItems([]); // Clear cart items after successful order
                 router.push("/customer");
             } else {
-                const errorData = await response.json();
-                alert(`Failed to place order: ${errorData.message}`);
+                alert("Failed to place order.");
             }
         } catch (error) {
             console.error("Error during checkout:", error.message);
             alert("An error occurred. Please try again.");
         }
-    };
-
-    const calculateTotal = () => {
-        return cartItems.reduce((total, item) => total + item.price * item.quantity, 0).toFixed(2);
     };
 
     if (loading) {
@@ -106,9 +96,9 @@ export default function CheckoutPage() {
             <Typography>Username: {user.username}</Typography>
             <Typography>Email: {user.email}</Typography>
 
-            <Divider sx={{ my: 3 }} />
-
-            <Typography variant="h6">Items in Cart</Typography>
+            <Typography variant="h6" sx={{ mt: 3 }}>
+                Items in Cart
+            </Typography>
             <List>
                 {cartItems.map((item, index) => (
                     <ListItem key={index}>
@@ -119,10 +109,6 @@ export default function CheckoutPage() {
                     </ListItem>
                 ))}
             </List>
-
-            <Typography variant="h6" sx={{ mt: 3 }}>
-                Total: €{calculateTotal()}
-            </Typography>
 
             <Button variant="contained" sx={{ mt: 3, mr: 2 }} onClick={handleCheckout}>
                 Place Order
