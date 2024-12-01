@@ -24,7 +24,7 @@ export default function CustomerPage() {
     }, []);
 
     useEffect(() => {
-        fetch("http://api.weatherapi.com/v1/current.json?key=a5bec305169942fe99f142501242110&q=Dublin&aqi=no")
+        fetch("https://api.weatherapi.com/v1/current.json?key=a5bec305169942fe99f142501242110&q=Dublin&aqi=no")
             .then((res) => res.json())
             .then((data) => setWeather(data))
             .catch(() => setWeather(null));
