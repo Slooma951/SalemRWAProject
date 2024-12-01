@@ -3,7 +3,7 @@ import connectToDatabase from "../../lib/mongodb";
 export default async function handler(req, res) {
     if (req.method === "POST") {
 
-        const {userId, items} = req.body;
+        const {userId, items, username, email} = req.body;
 
         if (!userId || !items) {
             return res.status(400).json({success: false, message: "Missing required fields."});
@@ -12,6 +12,8 @@ export default async function handler(req, res) {
         const db = await connectToDatabase();
         const result = await db.collection("orders").insertOne({
             userId,
+            username,
+            email,
             items,
             createdAt: new Date(),
         });
