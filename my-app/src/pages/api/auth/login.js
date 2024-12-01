@@ -1,5 +1,4 @@
 import connectToDatabase from "../../../lib/mongodb";
-import bcrypt from "bcryptjs";
 
 export default async function handler(req, res) {
     const db = await connectToDatabase();

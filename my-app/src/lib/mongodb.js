@@ -7,7 +7,7 @@ const connectToDatabase = async () => {
     if (!dbConnection) {
 
             if (!client) {
-                client = new MongoClient("mongodb+srv://b00149614:DwOAZ7tROreOh3at@rwa.vnkzr.mongodb.net/?retryWrites=true&w=majority&appName=RWA");
+                client = new MongoClient(process.env.MONGODB_URI);
             }
             await client.connect();
             dbConnection = client.db("RWADB");
