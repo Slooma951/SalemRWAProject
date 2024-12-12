@@ -14,9 +14,25 @@ export default async function handler(req, res) {
         if (!username || !email || !password) {
             return res.status(400).json({ success: false, message: "All fields are required." });
         }
-        if (password.length < 8) {
-            return res.status(400).json({ success: false, message: "Password must be at least 8 characters long." });
+
+        // Username validation: Must be alphanumeric and between 3-20 characters
+        const usernameRegex = /^[a-zA-Z0-9_]{3,20}$/;
+        if (!usernameRegex.test(username)) {
+            return res.status(400).json({
+                success: false,
+                message: "Username must be alphanumeric and 3-20 characters long.",
+            });
         }
+
+        // Password length validation
+        if (password.length < 8) {
+            return res.status(400).json({
+                success: false,
+                message: "Password must be at least 8 characters long.",
+            });
+        }
+
+        // Email format validation
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
             return res.status(400).json({ success: false, message: "Invalid email format." });
         }
