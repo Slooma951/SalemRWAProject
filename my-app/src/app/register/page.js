@@ -5,10 +5,17 @@ import TextField from "@mui/material/TextField";
 import Button from "@mui/material/Button";
 import Container from "@mui/material/Container";
 import Typography from "@mui/material/Typography";
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogContentText from "@mui/material/DialogContentText";
+import DialogTitle from "@mui/material/DialogTitle";
+import validator from "email-validator";
 
 export default function Register() {
     const [formData, setFormData] = useState({ username: "", email: "", password: "" });
-    const [error, setError] = useState("");
+    const [errorHolder, setErrorHolder] = useState("");
+    const [open, setOpen] = useState(false);
     const [message, setMessage] = useState("");
     const router = useRouter();
 
@@ -25,10 +32,33 @@ export default function Register() {
         setFormData({ ...formData, [name]: value });
     };
 
+    const validateForm = () => {
+        let errorMessage = "";
+        const { email, username, password } = formData;
+
+        if (!username || username.length < 3) {
+            errorMessage += "Username must be at least 3 characters long.\n";
+        }
+        if (!validator.validate(email)) {
+            errorMessage += "Invalid email format.\n";
+        }
+        if (!password || password.length < 8) {
+            errorMessage += "Password must be at least 8 characters long.\n";
+        }
+        return errorMessage;
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setError("");
+        setErrorHolder("");
         setMessage("");
+
+        const errorMessage = validateForm();
+        if (errorMessage) {
+            setErrorHolder(errorMessage);
+            setOpen(true);
+            return;
+        }
 
         try {
             const response = await fetch("/api/auth/register", {
@@ -42,10 +72,12 @@ export default function Register() {
                 setTimeout(() => router.push("/login"), 2000);
             } else {
                 const result = await response.json();
-                setError(result.message || "Registration failed");
+                setErrorHolder(result.message || "Registration failed");
+                setOpen(true);
             }
         } catch {
-            setError("Server error. Please try again.");
+            setErrorHolder("Server error. Please try again.");
+            setOpen(true);
         }
     };
 
@@ -68,11 +100,6 @@ export default function Register() {
                         required
                     />
                 ))}
-                {error && (
-                    <Typography variant="body2" color="error" style={{ marginTop: "1rem" }}>
-                        {error}
-                    </Typography>
-                )}
                 {message && (
                     <Typography variant="body2" color="primary" style={{ marginTop: "1rem" }}>
                         {message}
@@ -82,6 +109,24 @@ export default function Register() {
                     Register
                 </Button>
             </form>
+
+            {/* Dialog for error messages */}
+            <Dialog
+                open={open}
+                onClose={() => setOpen(false)}
+                aria-labelledby="alert-dialog-title"
+                aria-describedby="alert-dialog-description"
+            >
+                <DialogTitle id="alert-dialog-title">Error</DialogTitle>
+                <DialogContent>
+                    <DialogContentText id="alert-dialog-description">{errorHolder}</DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setOpen(false)} autoFocus>
+                        Close
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </Container>
     );
 }
