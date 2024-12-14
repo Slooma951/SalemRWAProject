@@ -37,17 +37,6 @@ export default async function handler(req, res) {
             return res.status(400).json({ success: false, message: "Invalid email format." });
         }
 
-        // Check if email is already registered
-        const existingEmail = await db.collection("users").findOne({ email });
-        if (existingEmail) {
-            return res.status(400).json({ success: false, message: "Email already registered." });
-        }
-
-        // Check if username is already taken
-        const existingUsername = await db.collection("users").findOne({ username });
-        if (existingUsername) {
-            return res.status(400).json({ success: false, message: "Username already taken." });
-        }
 
         // Hash the password
         const hashedPassword = await bcrypt.hash(password, 10);
